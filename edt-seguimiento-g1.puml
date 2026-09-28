@@ -1,0 +1,43 @@
+@startwbs
+title Formato Estructura Desglosada del Trabajo (EDT/WBS)\n<size:16>Seguimiento Humano G1</size>
+
+skinparam backgroundColor white
+skinparam ArrowColor #4472C4
+skinparam wbs {
+  BackgroundColor #4472C4
+  BorderColor #2F528F
+  FontColor white
+  FontSize 14
+  FontStyle bold
+  Padding 8
+  ArrowColor #4472C4
+}
+
+* 1 Proyecto\nSeguimiento Humano G1
+
+** 1.1 Fase 0\nAcceso y primer movimiento
+*** 1.1.1\nEntregable: Conexión validada con el robot
+**** 1.1.1.1\nPaquete: Configuración de red DDS y SDK
+**** 1.1.1.2\nPaquete: Secuencia StandUp - Move - Damp verificada
+
+** 1.2 Fase 1\nPercepción sin robot
+*** 1.2.1\nEntregable: Pipeline de percepción validado
+**** 1.2.1.1\nPaquete: Dataset RGB-D grabado
+**** 1.2.1.2\nPaquete: Detección, tracking y estimación de estado
+
+** 1.3 Fase 2\nControl en simulación cinemática
+*** 1.3.1\nEntregable: Controlador sintonizado
+**** 1.3.1.1\nPaquete: Simulador cinemático de uniciclo
+**** 1.3.1.2\nPaquete: Sintonización de ganancias y máquina de estados
+
+** 1.4 Fase 3\nLazo cerrado sobre el robot
+*** 1.4.1\nEntregable: Seguimiento validado en el robot real
+**** 1.4.1.1\nPaquete: Integración percepción - control - locomoción
+**** 1.4.1.2\nPaquete: Pruebas de campo con protocolo de seguridad
+
+** 1.5 Fase 4\nRobustez
+*** 1.5.1\nEntregable: Sistema robusto a oclusión y multitud
+**** 1.5.1.1\nPaquete: Re-identificación tras oclusión
+**** 1.5.1.2\nPaquete: Integración de LiDAR para retroceso seguro
+
+@endwbs

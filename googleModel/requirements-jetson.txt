@@ -1,0 +1,7 @@
+# Para el computador de a bordo del robot (PC2 o Thor).
+# NO incluye torch/torchvision a propósito: esas se instalan a mano con la
+# wheel de NVIDIA que corresponda a la versión de JetPack de esa máquina.
+# Ver setup_jetson.sh.
+opencv-python
+ultralytics
+numpy

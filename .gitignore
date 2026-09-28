@@ -1,0 +1,29 @@
+# Entornos virtuales — cada máquina arma el suyo desde requirements.txt
+.venv*/
+venv/
+env/
+**/.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Credenciales — nunca subir contraseñas/llaves del robot
+.env
+*.pem
+*_rsa
+*_rsa.pub
+*.key
+
+# Datos/grabaciones (banco de vídeo de la fase 1 en adelante — son pesados
+# y no son código, no tienen por qué vivir en git)
+recordings/
+data/
+*.mp4
+*.avi
+*.bag
