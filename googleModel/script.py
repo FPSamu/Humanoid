@@ -81,10 +81,21 @@ def rate_limit(objetivo, actual, max_delta):
 
 
 class WebcamSource:
-    """Cualquier cámara V4L2/UVC genérica, por índice de /dev/video*. Default en el Mac."""
+    """Cualquier cámara V4L2/UVC genérica. Default en el Mac."""
 
-    def __init__(self, index):
-        self.cap = cv2.VideoCapture(index)
+    def __init__(self, camera):
+        # Acepta índice numérico ("0") o ruta de dispositivo ("/dev/video4").
+        # Con varios nodos /dev/video* del mismo sensor (típico en la D435i:
+        # color, profundidad e infrarrojo exponen cada uno el suyo), el
+        # índice entero de OpenCV no coincide con el número real del
+        # dispositivo — de hecho para cámaras tipo RealSense, OpenCV lo
+        # interpreta con un backend especial ("obsensor") en vez de abrir
+        # /dev/videoN tal cual. Pasar la ruta evita esa ambigüedad.
+        try:
+            camera = int(camera)
+        except ValueError:
+            pass
+        self.cap = cv2.VideoCapture(camera)
 
     def read(self):
         return self.cap.read()
@@ -132,8 +143,10 @@ def main():
         "--iface", default=None,
         help="Interfaz de red DDS del robot (requerido con --backend robot). Ej: eth0",
     )
-    parser.add_argument("--camera", type=int, default=0,
-                         help="Índice de /dev/video* (solo con --camera-backend webcam).")
+    parser.add_argument("--camera", default="0",
+                         help="Índice ('0') o ruta de dispositivo ('/dev/video4') — "
+                              "solo con --camera-backend webcam. En Linux con varios "
+                              "/dev/video* del mismo sensor, usar la ruta es más confiable.")
     parser.add_argument(
         "--camera-backend", choices=["webcam", "realsense"], default="webcam",
         help="webcam (default): cv2.VideoCapture por índice, para probar en el Mac. "
