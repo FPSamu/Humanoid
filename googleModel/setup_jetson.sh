@@ -19,6 +19,13 @@ dpkg-query -W nvidia-l4t-core 2>/dev/null || echo "nvidia-l4t-core no encontrado
 lsb_release -a 2>/dev/null || true
 
 echo ""
+echo "Si esto es la PC2 (Jetson Orin NX): ya la confirmamos por SSH directo el"
+echo "2026-09-28 — Ubuntu 20.04.6 LTS, nvidia-l4t-core 35.3.1 = JetPack 5.1.1,"
+echo "Python del sistema 3.8. Si el comando de arriba no imprime justo eso,"
+echo "esto no es la PC2 (probablemente el Thor Backpack, JetPack 7 — versión"
+echo "de torch distinta a la de abajo)."
+
+echo ""
 echo "== Creando venv =="
 python3 -m venv .venv-jetson
 source .venv-jetson/bin/activate
@@ -26,11 +33,11 @@ pip install --upgrade pip
 
 echo ""
 echo "== IMPORTANTE: instalar torch a mano antes de seguir =="
-echo "Con la versión de JetPack de arriba, ve a la guía oficial de NVIDIA"
-echo "'PyTorch for Jetson' y usa la wheel que corresponda EXACTAMENTE a esa"
-echo "versión de JetPack/L4T. No hardcodeo la URL acá porque cambia por"
-echo "versión y se desactualiza rápido — usar la que NVIDIA publique para"
-echo "esta placa específica."
+echo "Para JetPack 5.1.1 / Python 3.8 (cp38) / aarch64: busca en el hilo"
+echo "oficial de NVIDIA 'PyTorch for Jetson' (developer.download.nvidia.com,"
+echo "carpeta jp/v511/pytorch) la wheel etiquetada nv2x.xx para cp38. No la"
+echo "hardcodeo acá porque el nombre exacto de archivo cambia; JetPack 5.1.1"
+echo "es una versión madura y bien documentada, no debería costar encontrarla."
 echo ""
 echo "Verifica después con:"
 echo "  python3 -c 'import torch; print(torch.__version__, torch.cuda.is_available())'"
