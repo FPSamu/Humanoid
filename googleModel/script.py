@@ -56,16 +56,19 @@ class UnitreeBackend:
         self.client = LocoClient()
         self.client.SetTimeout(10.0)
         self.client.Init()
-        # TODO: verificar estos nombres de método contra el ejemplo real del
-        # SDK instalado (algo como g1_loco_client_example.py) — pueden variar
-        # entre versiones. Esto resuelve el pendiente del checklist de
-        # hardware "servicio de locomoción responde".
+        # Confirmado 2026-09-28 contra el SDK real en la PC2
+        # (unitree_sdk2_python/example/g1/high_level/g1_loco_client_example.py):
+        # Move(vx, vy, vyaw) llama a SetVelocity(..., duration=1.0) por
+        # default. Cada comando solo es válido 1s salvo continous_move=True,
+        # que dejamos en False a propósito — así, si este proceso se cuelga
+        # sin llegar a close(), el robot se detiene solo al segundo
+        # siguiente en vez de seguir indefinidamente con el último comando.
 
     def move(self, vx, vy, vyaw):
         self.client.Move(vx, vy, vyaw)
 
     def close(self):
-        self.client.Move(0.0, 0.0, 0.0)
+        self.client.StopMove()
         try:
             self.client.Damp()
         except Exception:
