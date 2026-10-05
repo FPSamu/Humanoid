@@ -45,14 +45,13 @@ class UnitreeBackend:
     """
     Backend real: manda comandos al G1 vía LocoClient. Solo tiene sentido
     corriendo en el propio computador de a bordo del robot — no hay forma
-    de mandar esto por red desde otra máquina.
+    de mandar esto por red desde otra máquina. Asume que ChannelFactoryInitialize
+    ya se llamó (una sola vez por proceso, en main()) antes de construir esto.
     """
 
-    def __init__(self, network_interface):
-        from unitree_sdk2py.core.channel import ChannelFactoryInitialize
+    def __init__(self):
         from unitree_sdk2py.g1.loco.g1_loco_client import LocoClient
 
-        ChannelFactoryInitialize(0, network_interface)
         self.client = LocoClient()
         self.client.SetTimeout(10.0)
         self.client.Init()
@@ -132,6 +131,42 @@ class RealSenseSource:
         self.pipeline.stop()
 
 
+class VideoHubSource:
+    """
+    Frames de color vía el servicio "videohub" del propio robot (DDS/RPC) —
+    confirmado con hardware real 2026-10-07. NO usar WebcamSource con un
+    /dev/video* de la D435i: ese dispositivo está permanentemente ocupado
+    por /unitree/module/video_hub_pc4/videohub_pc4, un servicio de fábrica
+    que arranca solo y nunca lo suelta. Este es el camino correcto, y no
+    toca el dispositivo crudo en absoluto.
+
+    GetImageSample() es un poll por RPC (pedir-y-recibir), no una
+    suscripción a stream continuo — se llama una vez por fotograma, igual
+    que cap.read() en las otras fuentes. Devuelve JPEG como lista de
+    enteros (no bytes), de ahí el np.asarray antes de cv2.imdecode.
+
+    Asume que ChannelFactoryInitialize ya se llamó en main().
+    """
+
+    def __init__(self, timeout=3.0):
+        from unitree_sdk2py.go2.video.video_client import VideoClient
+
+        self.client = VideoClient()
+        self.client.SetTimeout(timeout)
+        self.client.Init()
+
+    def read(self):
+        code, data = self.client.GetImageSample()
+        if code != 0 or not data:
+            return False, None
+        arr = np.asarray(data, dtype=np.uint8)
+        frame = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+        return frame is not None, frame
+
+    def release(self):
+        pass
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -148,9 +183,11 @@ def main():
                               "solo con --camera-backend webcam. En Linux con varios "
                               "/dev/video* del mismo sensor, usar la ruta es más confiable.")
     parser.add_argument(
-        "--camera-backend", choices=["webcam", "realsense"], default="webcam",
+        "--camera-backend", choices=["webcam", "realsense", "videohub"], default="webcam",
         help="webcam (default): cv2.VideoCapture por índice, para probar en el Mac. "
-             "realsense: D435i vía pyrealsense2 — usar en el robot.",
+             "realsense: D435i vía pyrealsense2 (sin confirmar en este robot). "
+             "videohub: vía el servicio DDS del propio robot — la forma que "
+             "sí funciona en la PC2, confirmada con hardware real.",
     )
     parser.add_argument(
         "--no-display", action="store_true",
@@ -158,13 +195,26 @@ def main():
     )
     args = parser.parse_args()
 
-    if args.backend == "robot" and not args.iface:
-        parser.error("--backend robot necesita --iface (la interfaz de red del robot)")
+    needs_dds = args.backend == "robot" or args.camera_backend == "videohub"
+    if needs_dds and not args.iface:
+        parser.error("--backend robot y --camera-backend videohub necesitan "
+                     "--iface (la interfaz de red del robot)")
 
-    backend = UnitreeBackend(args.iface) if args.backend == "robot" else DryRunBackend()
+    if needs_dds:
+        from unitree_sdk2py.core.channel import ChannelFactoryInitialize
+        # Una sola vez por proceso — tanto UnitreeBackend como VideoHubSource
+        # asumen que ya se llamó esto antes de construirse.
+        ChannelFactoryInitialize(0, args.iface)
+
+    backend = UnitreeBackend() if args.backend == "robot" else DryRunBackend()
 
     model = YOLO("yolov8s-pose.pt")
-    cap = RealSenseSource() if args.camera_backend == "realsense" else WebcamSource(args.camera)
+    if args.camera_backend == "videohub":
+        cap = VideoHubSource()
+    elif args.camera_backend == "realsense":
+        cap = RealSenseSource()
+    else:
+        cap = WebcamSource(args.camera)
 
     vx_actual, vyaw_actual = 0.0, 0.0
     tiempo_anterior = time.time()
